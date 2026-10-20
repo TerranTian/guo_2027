@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { emptyFilters, emptyProfile, checkProfile, extractAlerts, matches, toCsv, type Dataset } from './filter.ts';
+import { emptyFilters, emptyProfile, checkProfile, extractAlerts, retainLocations, matches, toCsv, type Dataset } from './filter.ts';
 import { restorePreferences } from './storage.ts';
 const data: Dataset = JSON.parse(readFileSync(new URL('../public/positions.json', import.meta.url), 'utf8'));
 
@@ -99,3 +99,22 @@ function fixture(values: Record<number, string>) {
   for (const [index, value] of Object.entries(values)) p.values[+index] = value;
   return p;
 }
+test('multiple cities and districts are OR alternatives within selected provinces', () => {
+  const make = (work: string, settlement = '') => ({...data.rows[0], values: data.rows[0].values.map((v,i)=>i===20?work:i===21?settlement:v)});
+  const f = {...emptyFilters,location:' 海淀区，朝阳区、 西湖区; ',regions:['北京市']};
+  assert.equal(matches(make('北京市海淀区'),f),true);
+  assert.equal(matches(make('北京市朝阳区'),f),true);
+  assert.equal(matches(make('北京市东城区','北京市海淀区'),f),false);
+  assert.equal(matches(make('浙江省杭州市西湖区'),f),false);
+  assert.equal(matches(make('浙江省杭州市西湖区'),{...f,regions:[]}),true);
+  assert.equal(matches(make('北京市东城区'),{...emptyFilters,location:'， 、 ; '}),true);
+});
+
+test('province changes retain valid selected districts and remove only out-of-scope selections', () => {
+  const locations = ['北京市海淀区','北京市朝阳区','浙江省杭州市西湖区'];
+  const selected = '北京市海淀区、北京市朝阳区、浙江省杭州市西湖区';
+  assert.equal(retainLocations(selected,['北京市','浙江省'],locations),selected);
+  assert.equal(retainLocations(selected,['北京市'],locations),'北京市海淀区、北京市朝阳区');
+  assert.equal(retainLocations(selected,[],locations),'');
+  assert.equal(retainLocations('海淀区, 朝阳区',['北京市'],locations),'海淀区、朝阳区');
+});

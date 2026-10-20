@@ -18,8 +18,8 @@ const rules: [string, RegExp][] = [
   ['ielts', /雅思|\bIELTS\b/i],
   ['toefl', /托福|\bTOEFL\b/i],
 ];
-const mentioned = /英语|雅思|托福|\b(?:CET|TEM)[\s－-]*[468]\b|\bIELTS\b|\bTOEFL\b|专业[四八48]级/i;
-const unlimited = /(?:无|不作|不做|不设|没有)英语(?:水平|等级|成绩)?要求|英语(?:水平|等级|成绩)?(?:不作要求|不做要求|不限|无要求)|不要求(?:提供|取得|具有|具备)?英语(?:水平|等级|成绩|证书)/;
+const mentioned = /英语|雅思|托福|\b(?:CET|TEM)[\s－-]*[468]\b|\bIELTS\b|\bTOEFL\b/i;
+const unlimited = /(?:无|不作|不做|不设|没有)英语(?:水平|等级|成绩)?要求|英语(?:水平|等级|成绩)?(?:不作要求|不做要求|不限(?!于)|无要求)|不要求(?:提供|取得|具有|具备)?英语(?:水平|等级|成绩|证书)/;
 export type EnglishEvidence = { kinds: string[]; evidence: string[] };
 const cache = new Map<string, EnglishEvidence>();
 export function englishRequirements(p: Position): EnglishEvidence {

@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run prepare:english && tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "data": ".venv/bin/python scripts/import_data.py",
-    "test": "tsx --test src/*.test.ts"
+    "data": ".venv/bin/python scripts/import_data.py && npm run prepare:english",
+    "test": "tsx --test src/*.test.ts",
+    "prepare:english": "tsx scripts/prepare_english.ts"
   },
   "dependencies": {
     "react": "^19.2.0",

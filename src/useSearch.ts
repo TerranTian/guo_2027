@@ -20,7 +20,7 @@ export function useSearch(data: Dataset | undefined, query: SearchQuery) {
       }
     };
     instance.onerror = () => setError('查询线程运行失败，请刷新页面重试。');
-    instance.postMessage({ rows: data.rows });
+    instance.postMessage({ rows: data.rows, englishRules: data.englishRules });
     return () => { instance.terminate(); worker.current = null; requestId.current++; };
   }, [data]);
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { scoreFields, validScore, type ScoreKey } from './english-score';
 import { englishOptions } from './english';
 import { emptyFilters, emptyProfile, profileOptions, type Filters, type Profile } from './filter';
 export function readLocal(key: string): unknown {
@@ -28,7 +29,9 @@ export function restorePreferences(value: unknown): { filters: Filters; profile:
   if (!englishOptions.some(o => o.value === result.filters.english)) result.filters.english = '';
   if (obj.profile && typeof obj.profile === 'object') {
     const values = obj.profile as Record<string, unknown>;
-    for (const key of Object.keys(emptyProfile) as (keyof Profile)[]) {
+    for (const key of Object.keys(scoreFields) as ScoreKey[]) { if (validScore(key, values[key])) result.profile[key] = values[key]; }
+    for (const key of ['tem4', 'tem8'] as const) { if (values[key] === '已通过' || values[key] === '未通过') result.profile[key] = values[key]; }
+    for (const key of Object.keys(profileOptions) as (keyof typeof profileOptions)[]) {
       if (typeof values[key] === 'string' && profileOptions[key].includes(values[key])) result.profile[key] = values[key];
     }
   }

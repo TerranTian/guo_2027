@@ -1,7 +1,7 @@
 import { checkProfile, matches, type Filters, type Position, type Profile } from './filter';
 export type SearchQuery = { filters: Filters; profile: Profile; mode: 'profile' | 'raw' };
 export function searchPositions(rows: Position[], query: SearchQuery) {
-  const f = query.mode === 'profile' ? { ...query.filters, education: '', degree: '', politics: '', years: '', project: '' } : query.filters;
+  const f = query.mode === 'profile' ? { ...query.filters, education: '', degree: '', politics: '', years: '', project: '', english: '' } : query.filters;
   const indices: number[] = [];
   let excluded = 0;
   rows.forEach((p, i) => {

@@ -1,7 +1,9 @@
+import type { CompiledEnglish } from './english-rules';
+import { checkEnglishScores, emptyScores, type EnglishScores } from './english-score';
 import { englishRequirements } from './english';
 import { matchMajor } from './major';
 export type Position = { id: string; sheet: string; row: number; values: string[] };
-export type Dataset = { headers: string[]; rows: Position[]; sources: { name: string; count: number }[]; file: string; year?: number; importedAt?: string; sourceHash?: string };
+export type Dataset = { headers: string[]; rows: Position[]; sources: { name: string; count: number }[]; file: string; year?: number; importedAt?: string; sourceHash?: string; englishRules?: Record<string, CompiledEnglish> };
 export type Filters = { query: string; major: string; majorMode: string; majorId: string; majorLevel: string; location: string; regions: string[]; includeUnlimited: boolean; education: string; degree: string; politics: string; years: string; project: string; category: string; department: string; exam: string; test: string; alert: string; english: string };
 export const emptyFilters: Filters = { query: '', major: '', majorMode: 'catalog', majorId: '', majorLevel: '本科', location: '', regions: [], includeUnlimited: true, education: '', degree: '', politics: '', years: '', project: '', category: '', department: '', exam: '', test: '', alert: '', english: '' };
 export const profileOptions = {
@@ -13,8 +15,8 @@ export const profileOptions = {
   graduation: ['2027届毕业生', '其他应届毕业生', '非应届毕业生'],
   gender: ['男', '女'],
 };
-export type Profile = Record<keyof typeof profileOptions, string>;
-export const emptyProfile: Profile = { education: '', degree: '', politics: '', years: '', project: '', graduation: '', gender: '' };
+export type Profile = Record<keyof typeof profileOptions, string> & EnglishScores;
+export const emptyProfile: Profile = { ...emptyScores, education: '', degree: '', politics: '', years: '', project: '', graduation: '', gender: '' };
 export const provinces = '北京市 天津市 河北省 山西省 内蒙古自治区 辽宁省 吉林省 黑龙江省 上海市 江苏省 浙江省 安徽省 福建省 江西省 山东省 河南省 湖北省 湖南省 广东省 广西壮族自治区 海南省 重庆市 四川省 贵州省 云南省 西藏自治区 陕西省 甘肃省 青海省 宁夏回族自治区 新疆维吾尔自治区 香港特别行政区 澳门特别行政区 台湾省'.split(' ');
 export const projectTerms: Record<string, string> = { 大学生村官: '大学生村官', 三支一扶: '三支一扶', 特岗教师: '特设岗位', 西部计划: '志愿服务西部', 高校毕业生退役士兵: '退役士兵' };
 export const educationRules: Record<string, string[]> = {
@@ -44,12 +46,19 @@ export function extractAlerts(p: Position): Alert[] {
   });
 }
 export function unlimitedMajor(text: string) { return /^(?:专业不限|不限专业|不限|无限制)[。\s]*$/.test(text.trim()); }
+export function locationTerms(text: string) { return text.split(/[,，、;；\n]+/).map(s => s.trim()).filter(Boolean); }
+export function retainLocations(location: string, regions: string[], workLocations: string[]) {
+  if (!regions.length) return '';
+  const available = workLocations.filter(place => regions.some(region => place.includes(region)));
+  return [...new Set(locationTerms(location))].filter(place => available.some(full => full.includes(place))).join('、');
+}
 export function matches(p: Position, f: Filters) {
   const v = p.values;
+  const places = locationTerms(f.location);
   const query = f.query.trim().toLocaleLowerCase();
   const text = query ? v.join(' ').toLocaleLowerCase() : '';
   return (!query || query.split(/\s+/).every(q => text.includes(q)))
-    && (!f.location || v[20].includes(f.location.trim()))
+    && (!places.length || places.some(place => v[20].includes(place)))
     && (!f.regions.length || f.regions.some(r => v[20].includes(r)))
     && (!f.education || v[13] === f.education)
     && (!f.degree || v[14] === f.degree)
@@ -104,6 +113,8 @@ export function checkProfile(p: Position, profile: Profile): Check[] {
     const failed = male !== female && (male ? profile.gender === '女' : profile.gender === '男');
     add('性别', failed ? false : undefined, male !== female ? `备注明确${male ? '限男性' : '限女性'}，其余条件需核对。` : '未识别出单一性别限制，请核对原文；未提及不等于不限。');
   }
+  const english = checkEnglishScores(p, profile, profile.education);
+  if (english) checks.push(english);
   return checks;
 }
 export function toCsv(headers: string[], rows: Position[]) {

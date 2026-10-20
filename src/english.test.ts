@@ -16,7 +16,7 @@ test('professional English is distinct from college English and abbreviations wo
  assert.deepEqual(englishRequirements(position('CET-4、CET6、TEM－4、TEM8、IELTS、TOEFL')).kinds,['cet4','cet6','tem4','tem8','ielts','toefl']);
 });
 test('absence, explicit unrestricted and other English descriptions stay distinct',()=>{
- assert.deepEqual(englishRequirements(position('计算机四级；法语六级')).kinds,['unmentioned']);
+ assert.deepEqual(englishRequirements(position('计算机四级；法语六级；俄语专业八级')).kinds,['unmentioned']);
  assert.deepEqual(englishRequirements(position('英语无要求')).kinds,['unrestricted']);
  assert.deepEqual(englishRequirements(position('具有良好的英语口语能力')).kinds,['other']);
  assert.deepEqual(englishRequirements(position('英语专业八级证书不作要求')).kinds,['tem8']);
